@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redcliffe Labs | Logistics Portal (Enterprise)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        redcliffe: { 
+                            navy: '#003B73', 
+                            magenta: '#B02695', 
+                            green: '#569E89', 
+                            purple: '#7E5096', 
+                            olive: '#9CA355', 
+                            light: '#F0F4F8', 
+                            blue: '#00548F',
+                            surface: '#ffffff',
+                            background: '#f8fafc'
+                        }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    boxShadow: {
+                        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'floating': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s ease-out forwards'
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; font-size: 13px; background-color: #f8fafc; color: #334155; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Sidebar Transition */
+        .sidebar-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* Form Inputs */
+        .dash-label { font-size: 11px; color: #64748b; margin-bottom: 6px; display: block; font-weight: 700; text-transform: uppercase; letter-spacing: 0.025em; }
+        .dash-input { 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px; 
+            padding: 10px 14px; 
+            width: 100%; 
+            font-size: 13px; 
+            color: #1e293b; 
+            background-color: #fff; 
+            outline: none; 
+            transition: all 0.2s ease; 
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .dash-input:focus { border-color: #003B73; box-shadow: 0 0 0 3px rgba(0, 59, 115, 0.1); }
+        .dash-input.error { border-color: #ef4444; background-color: #fef2f2; }
+
+        /* Buttons */
+        .btn-primary { background-color: #003B73; color: white; transition: all 0.2s; }
+        .btn-primary:hover { background-color: #002855; box-shadow: 0 4px 6px -1px rgba(0, 59, 115, 0.3); }
+        
+        /* Status Badges */
+        .status-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .status-approval { background-color: #fffbeb; color: #d97706; border: 1px solid #fcd34d; }
+        .status-pending { background-color: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+        .status-ongoing { background-color: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe; }
+        .status-success { background-color: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+
+        /* Dropdown Checklist */
+        .dropdown-check-list { position: relative; }
+        .dropdown-check-list .anchor { position: relative; cursor: pointer; display: block; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; width: 100%; font-weight: 500; color: #475569; }
+        .dropdown-check-list .anchor:after { position: absolute; content: ""; border-left: 2px solid #64748b; border-top: 2px solid #64748b; padding: 3px; right: 14px; top: 35%; transform: rotate(-135deg); transition: transform 0.2s; }
+        .dropdown-check-list.visible .anchor:after { transform: rotate(45deg); top: 40%; }
+        .dropdown-check-list ul.items { padding: 8px; display: none; margin: 4px 0 0; border: 1px solid #e2e8f0; border-radius: 8px; position: absolute; top: 100%; left: 0; right: 0; background: #fff; z-index: 50; max-height: 240px; overflow-y: auto; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .dropdown-check-list.visible ul.items { display: block; animation: fadeIn 0.2s; }
+        .dropdown-check-list ul.items li { list-style: none; margin-bottom: 4px; padding: 6px 12px; border-radius: 4px; transition: bg 0.2s; }
+        .dropdown-check-list ul.items li:hover { background-color: #f8fafc; }
+        
+        /* Table */
+        .custom-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .custom-table th { background-color: #f8fafc; color: #475569; font-size: 11px; text-transform: uppercase; font-weight: 800; padding: 16px; border-bottom: 2px solid #e2e8f0; text-align: left; position: sticky; top: 0; z-index: 10; }
+        .custom-table td { padding: 16px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; background: white; transition: background 0.2s; }
+        .custom-table tr:hover td { background-color: #f8fafc; }
+        
+        /* Timeline */
+        .timeline-line { position: absolute; left: 23px; top: 32px; bottom: -32px; width: 2px; background: #e2e8f0; z-index: 0; }
+        .timeline-item:last-child .timeline-line { display: none; }
+
+        /* Toast Notifications */
+        #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { min-width: 320px; background: white; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); padding: 16px; display: flex; align-items: center; gap: 12px; animation: slideIn 0.3s ease-out; border-left: 4px solid transparent; }
+        .toast.success { border-left-color: #22c55e; }
+        .toast.error { border-left-color: #ef4444; }
+        .toast.info { border-left-color: #3b82f6; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        /* Loader */
+        #pageLoader { position: fixed; inset: 0; background: rgba(255,255,255,1); z-index: 10000; display: flex; justify-content: center; align-items: center; flex-direction: column; transition: opacity 0.5s, visibility 0.5s; }
+        .hidden-loader { opacity: 0; visibility: hidden; }
+    </style>
+</head>
+<body class="bg-slate-50 h-screen overflow-hidden flex flex-col font-sans">
+
+    <div id="pageLoader">
+        <img src="logo.png" class="h-16 mb-4 animate-pulse object-contain">
+        <div class="w-12 h-12 border-4 border-redcliffe-navy border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 text-sm font-bold text-redcliffe-navy tracking-widest">INITIALIZING...</p>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <div id="loginView" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-redcliffe-navy to-blue-900 hidden">
+        <div class="flex flex-col md:flex-row items-center gap-20 p-8 w-full max-w-6xl justify-center animate-slide-up">
+            <div class="text-white text-center md:text-left max-w-md">
+                <img src="logo.png" alt="Redcliffe Labs Logo" class="h-28 mb-8 bg-white p-4 rounded-2xl object-contain shadow-2xl">
+                <h1 class="text-5xl font-extrabold leading-tight tracking-tight mb-4">Logistics <br><span class="text-blue-300">Management</span></h1>
+                <p class="text-lg font-medium opacity-80 leading-relaxed">Secure, Real-time Inventory & Shipment Tracking System for Redcliffe Labs.</p>
+                <div class="mt-8 flex gap-6 text-sm font-semibold opacity-70">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-shield-halved"></i> Enterprise Security</span>
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-bolt"></i> Real-time Sync</span>
+                </div>
+            </div>
+            
+            <div class="bg-white/95 backdrop-blur-sm rounded-3xl p-10 w-full max-w-sm shadow-2xl border border-white/20 transform transition hover:scale-[1.02] duration-300">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">Welcome Back</h2>
+                    <p class="text-xs text-gray-500 mt-1">Please sign in to your account</p>
+                </div>
+                
+                <div class="space-y-5">
+                    <div>
+                        <label class="text-xs font-bold text-gray-600 uppercase mb-1.5 block">Email or EID</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-envelope absolute left-4 top-3.5 text-gray-400"></i>
+                            <input type="text" id="loginEmail" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 outline-none text-sm focus:border-redcliffe-navy focus:ring-4 focus:ring-blue-50 transition" placeholder="e.g. RCL8782">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-600 uppercase mb-1.5 block">Password</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-4 top-3.5 text-gray-400"></i>
+                            <input type="password" id="loginPass" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 outline-none text-sm focus:border-redcliffe-navy focus:ring-4 focus:ring-blue-50 transition" placeholder="••••••••">
+                        </div>
+                    </div>
+                    
+                    <button onclick="handleLogin()" id="loginBtn" class="w-full bg-redcliffe-navy hover:bg-blue-900 text-white font-bold py-3.5 rounded-xl shadow-lg hover:shadow-xl transition-all transform active:scale-95 flex justify-center items-center gap-2 group">
+                        <span>Sign In Securely</span> <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+                    <p id="loginMsg" class="text-xs text-red-500 text-center font-bold h-4"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainView" class="hidden flex flex-col h-full bg-[#F1F5F9] relative transition-opacity duration-500">
+        
+        <header class="bg-white h-18 px-6 shadow-sm z-30 flex-none border-b border-gray-200 flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <button onclick="toggleSidebar()" class="text-gray-500 hover:text-redcliffe-navy transition p-2 rounded-lg hover:bg-gray-100">
+                    <i class="fa-solid fa-bars-staggered text-xl"></i>
+                </button>
+                <div class="flex items-center gap-3">
+                    <img src="logo.png" alt="Logo" class="h-8 object-contain">
+                    <div class="h-6 w-px bg-gray-300 mx-2 hidden md:block"></div>
+                    <span class="font-bold text-gray-700 tracking-tight hidden md:block">LOGISTICS PORTAL</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="hidden md:flex flex-col items-end mr-2">
+                    <span id="displayUsername" class="text-sm font-bold text-gray-800 leading-tight">USER</span>
+                    <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> <span id="headerRole">Loading...</span>
+                    </span>
+                </div>
+                
+                <div class="relative">
+                    <button onclick="toggleProfileDD()" class="h-10 w-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition border border-gray-200 focus:ring-4 focus:ring-blue-50">
+                        <i class="fa-solid fa-user text-gray-600"></i>
+                    </button>
+                    
+                    <div id="profileDropdownMenu" class="hidden absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-2xl py-2 z-50 border border-gray-100 transform origin-top-right transition-all animate-fade-in">
+                        <div class="px-5 py-4 border-b border-gray-50 bg-gray-50/50">
+                            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Signed in as</p>
+                            <p class="text-sm font-bold text-redcliffe-navy truncate" id="ddEmail">user@example.com</p>
+                        </div>
+                        <div class="p-2">
+                            <a href="#" onclick="nav('profile'); toggleProfileDD()" class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition group">
+                                <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition"><i class="fa-solid fa-user-gear"></i></div>
+                                <div class="flex-1">
+                                    <p class="font-bold">Settings</p>
+                                    <p class="text-xs text-gray-500">Manage account</p>
+                                </div>
+                            </a>
+                            <a href="#" onclick="openRiderMode()" class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition group">
+                                <div class="w-8 h-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition"><i class="fa-solid fa-motorcycle"></i></div>
+                                <div class="flex-1">
+                                    <p class="font-bold">Rider View</p>
+                                    <p class="text-xs text-gray-500">Switch interface</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="border-t border-gray-100 p-2">
+                            <a href="#" onclick="handleLogout()" class="flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg transition group">
+                                <div class="w-8 h-8 bg-red-100 text-red-600 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition"><i class="fa-solid fa-power-off"></i></div>
+                                <span class="font-bold">Sign Out</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/20 z-30 hidden transition-opacity backdrop-blur-sm"></div>
+        
+        <aside id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-white shadow-2xl transform -translate-x-full sidebar-transition z-40 flex flex-col pt-20 border-r border-gray-100">
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+                <div class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-4 mb-2">Main Menu</div>
+                
+                <button onclick="nav('dashboard')" class="w-full flex items-center gap-4 px-4 py-3.5 bg-blue-50 text-redcliffe-navy rounded-xl font-bold text-sm border-l-4 border-redcliffe-navy nav-btn shadow-sm transition-all group" id="nav-dashboard">
+                    <i class="fa-solid fa-gauge-high w-5 text-center text-lg group-hover:scale-110 transition"></i> Dashboard
+                </button>
+                
+                <div id="adminMenu" class="hidden space-y-2 mt-6">
+                    <div class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-4 mt-6 mb-2">Administration</div>
+                    <button onclick="nav('store')" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl text-sm transition nav-btn font-medium group" id="nav-store">
+                        <i class="fa-solid fa-warehouse w-5 text-center text-lg text-purple-500 group-hover:scale-110 transition"></i> Inventory
+                    </button>
+                    <button onclick="nav('history')" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl text-sm transition nav-btn font-medium group" id="nav-history">
+                        <i class="fa-solid fa-clock-rotate-left w-5 text-center text-lg text-orange-500 group-hover:scale-110 transition"></i> Audit Logs
+                    </button>
+                    <button onclick="nav('clinics')" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl text-sm transition nav-btn font-medium group" id="nav-clinics">
+                        <i class="fa-solid fa-hospital-user w-5 text-center text-lg text-green-500 group-hover:scale-110 transition"></i> Manage Clinics
+                    </button>
+                </div>
+
+                <div id="agentMenu" class="hidden space-y-2 mt-6">
+                    <div class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-4 mt-6 mb-2">My Activities</div>
+                    <button onclick="nav('my-reports')" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl text-sm transition nav-btn font-medium group" id="nav-my-reports">
+                        <i class="fa-solid fa-clipboard-list w-5 text-center text-lg text-teal-500 group-hover:scale-110 transition"></i> My Reports
+                    </button>
+                </div>
+
+                <div class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-4 mt-6 mb-2">System</div>
+                <button onclick="nav('suggestions')" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl text-sm transition nav-btn font-medium group" id="nav-suggestions">
+                    <i class="fa-regular fa-lightbulb w-5 text-center text-lg text-yellow-500 group-hover:scale-110 transition"></i> Suggestions
+                </button>
+                <button onclick="nav('profile')" class="w-full flex items-center gap-4 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl text-sm transition nav-btn font-medium group" id="nav-profile">
+                    <i class="fa-solid fa-id-badge w-5 text-center text-lg text-gray-500 group-hover:scale-110 transition"></i> Profile
+                </button>
+            </nav>
+            <div class="p-6 border-t border-gray-100 bg-gray-50">
+                <div class="flex items-center gap-3">
+                    <div class="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">System Operational</p>
+                </div>
+                <p class="text-[10px] text-gray-300 mt-1">v3.0.0 Enterprise Build</p>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-hidden flex flex-col p-6 relative">
+            
+            <div id="view-dashboard" class="view-section flex flex-col h-full animate-slide-up">
+                <div class="flex-none bg-white p-6 rounded-2xl shadow-card border border-gray-100 mb-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pb-4 border-b border-gray-50">
+                        <div>
+                            <h2 class="text-2xl font-black text-redcliffe-navy tracking-tight">LOGISTICS OVERVIEW</h2>
+                            <p class="text-sm text-gray-500 mt-1 font-medium">Real-time shipment tracking and management</p>
+                        </div>
+                        <div class="flex items-center gap-4 mt-4 md:mt-0">
+                            <div class="bg-blue-50 px-5 py-3 rounded-xl border border-blue-100 text-center">
+                                <span class="text-[10px] text-blue-600 font-bold uppercase tracking-wider block">Total Orders</span>
+                                <span id="countDisplay" class="text-2xl font-black text-redcliffe-navy">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-6 gap-5 mb-6">
+                        <div class="md:col-span-1">
+                            <label class="dash-label">Order ID</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400 text-xs"></i>
+                                <input type="text" id="filterId" class="dash-input pl-9" placeholder="TRK-XXXX">
+                            </div>
+                        </div>
+                        
+                        <div class="md:col-span-1 hidden" id="adminAgentFilterDiv">
+                            <label class="dash-label text-blue-600">Raised By</label>
+                            <select id="filterAgent" class="dash-input bg-blue-50 border-blue-200 font-medium" onchange="renderShipments()"><option value="">All Users</option></select>
+                        </div>
+
+                        <div class="md:col-span-1"><label class="dash-label">Clinic Filter</label><div id="clinicDropdown" class="dropdown-check-list" tabindex="100"><span class="anchor" onclick="toggleDD('clinicList')">All Clinics</span><ul id="clinicList" class="items"></ul></div></div>
+                        <div class="md:col-span-1"><label class="dash-label">Status Filter</label><div id="statusDropdown" class="dropdown-check-list" tabindex="100"><span class="anchor" onclick="toggleDD('statusList')">All Status</span><ul id="statusList" class="items"><li><label><input type="checkbox" value="Approval Pending"/> Approval Pending</label></li><li><label><input type="checkbox" value="PENDING"/> Pending</label></li><li><label><input type="checkbox" value="Ongoing"/> Ongoing</label></li><li><label><input type="checkbox" value="Successful"/> Successful</label></li></ul></div></div>
+                        <div class="md:col-span-1"><label class="dash-label">Start Date</label><input type="date" id="dashStart" class="dash-input"></div>
+                        <div class="md:col-span-1"><label class="dash-label">End Date</label><input type="date" id="dashEnd" class="dash-input"></div>
+                    </div>
+
+                    <div class="flex gap-3 pt-4 border-t border-gray-50 flex-wrap">
+                        <button onclick="renderShipments()" class="bg-redcliffe-green hover:bg-green-700 text-white px-6 py-2.5 rounded-lg text-xs font-bold shadow-md transition flex items-center gap-2"><i class="fa-solid fa-filter"></i> Apply Filters</button>
+                        <button onclick="resetFilters()" class="bg-redcliffe-purple hover:bg-purple-800 text-white px-6 py-2.5 rounded-lg text-xs font-bold shadow-md transition flex items-center gap-2"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                        <div class="flex-1"></div>
+                        <button onclick="exportCSV()" class="bg-redcliffe-olive hover:bg-yellow-700 text-white px-6 py-2.5 rounded-lg text-xs font-bold shadow-md transition flex items-center gap-2"><i class="fa-solid fa-file-csv text-sm"></i> Export Data</button>
+                        <button onclick="openModal()" class="bg-redcliffe-navy hover:bg-blue-900 text-white px-8 py-2.5 rounded-lg text-xs font-bold shadow-lg hover:shadow-xl transition transform active:scale-95 flex items-center gap-2"><i class="fa-solid fa-plus-circle text-sm"></i> CREATE REQUEST</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 bg-white rounded-2xl shadow-card border border-gray-200 overflow-hidden flex flex-col relative">
+                    <div class="overflow-auto flex-1">
+                        <table class="custom-table w-full">
+                            <thead class="sticky top-0 z-20 shadow-sm">
+                                <tr>
+                                    <th class="w-24">Date</th>
+                                    <th class="w-32">Order ID</th>
+                                    <th class="w-32">Raised By</th>
+                                    <th>Clinic / Destination</th>
+                                    <th class="w-24 text-center">Items</th>
+                                    <th class="w-40 text-center">Status</th>
+                                    <th class="w-24 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shipmentTableBody" class="text-xs">
+                                <tr><td colspan="7" class="p-10 text-center text-gray-400 font-medium"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> Fetching live data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-store" class="view-section hidden flex-1 flex-col h-full bg-white p-6 overflow-auto rounded-2xl shadow-card border border-gray-200 animate-slide-up">
+                <div class="flex justify-between mb-6 items-center border-b border-gray-100 pb-4">
+                    <div>
+                        <h3 class="font-bold text-redcliffe-navy text-2xl flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-purple-500"></i> Inventory</h3>
+                        <p class="text-xs text-gray-500 mt-1">Manage master product list</p>
+                    </div>
+                    <div id="stockActionGroup" class="flex gap-2">
+                        <button onclick="openStockSingle()" class="bg-blue-50 text-blue-700 border border-blue-200 px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 transition shadow-sm"><i class="fa-solid fa-plus"></i> Single</button>
+                        <button onclick="openStockBulk()" class="bg-purple-50 text-purple-700 border border-purple-200 px-4 py-2 rounded-lg text-xs font-bold hover:bg-purple-100 transition shadow-sm"><i class="fa-solid fa-layer-group"></i> Bulk</button>
+                        <button onclick="openStockCSV()" class="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-lg text-xs font-bold hover:bg-green-100 transition shadow-sm"><i class="fa-solid fa-file-csv"></i> CSV</button>
+                    </div>
+                </div>
+                
+                <div id="addProductSection" class="hidden bg-yellow-50 p-6 rounded-xl border border-yellow-200 mb-6 shadow-sm">
+                    <h4 class="text-sm font-bold text-yellow-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-star"></i> Add New Product to Master List</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div><label class="dash-label text-yellow-700">Product Name</label><input type="text" id="newProdName" class="dash-input border-yellow-300" placeholder="Name"></div>
+                        <div><label class="dash-label text-yellow-700">Price (₹)</label><input type="number" id="newProdPrice" class="dash-input border-yellow-300" placeholder="0.00"></div>
+                        <button onclick="addProductManual()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2.5 rounded-lg text-xs font-bold shadow transition h-[42px]">Save Product</button>
+                    </div>
+                </div>
+                <div class="mb-4 text-right hidden" id="addProductBtnContainer">
+                    <button onclick="document.getElementById('addProductSection').classList.toggle('hidden')" class="text-blue-600 text-xs font-bold hover:text-blue-800 transition flex items-center gap-1 ml-auto border border-blue-200 px-3 py-1 rounded bg-blue-50"><i class="fa-solid fa-plus-circle"></i> Add New Product Definition</button>
+                </div>
+
+                <div class="flex-1 overflow-auto border rounded-xl shadow-inner">
+                    <table class="custom-table text-xs">
+                        <thead class="sticky top-0 bg-gray-50"><tr><th>Product Name</th><th>Price/Unit</th><th>Stock Level</th><th>Status</th></tr></thead>
+                        <tbody id="storeTableBody"><tr><td colspan="4" class="p-8 text-center text-gray-400">Loading Inventory...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="view-history" class="view-section hidden flex-1 flex-col h-full bg-white p-6 overflow-auto rounded-2xl shadow-card border border-gray-200 animate-slide-up">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 pb-4 border-b border-gray-100">
+                    <div>
+                        <h3 class="font-bold text-redcliffe-navy text-2xl flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-orange-500"></i> Audit Logs</h3>
+                        <p class="text-xs text-gray-500 mt-1">Full transaction history</p>
+                    </div>
+                    <div class="flex gap-3 items-end bg-gray-50 p-3 rounded-xl border border-gray-200">
+                        <div><label class="dash-label">Start</label><input type="date" id="histStart" class="dash-input w-32 py-1.5"></div>
+                        <div><label class="dash-label">End</label><input type="date" id="histEnd" class="dash-input w-32 py-1.5"></div>
+                        <div><label class="dash-label">Search</label><input type="text" id="histSearch" class="dash-input w-40 py-1.5" placeholder="Keyword..."></div>
+                        <button onclick="renderHistory()" class="bg-redcliffe-navy text-white px-5 py-2 rounded-lg text-xs font-bold shadow hover:bg-blue-900 transition h-[38px]">Filter</button>
+                    </div>
+                </div>
+                <div class="flex-1 overflow-auto border rounded-xl shadow-inner">
+                    <table class="custom-table text-xs">
+                        <thead class="sticky top-0 bg-gray-50"><tr><th>Timestamp</th><th>Type</th><th>Product</th><th>Qty</th><th>User</th><th>Reason</th></tr></thead>
+                        <tbody id="historyTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="view-clinics" class="view-section hidden flex-1 flex-col h-full bg-white p-6 overflow-auto rounded-2xl shadow-card border border-gray-200 animate-slide-up">
+                <h3 class="font-bold text-redcliffe-navy text-2xl mb-6 flex items-center gap-2"><i class="fa-solid fa-map-location-dot text-green-500"></i> Clinic Management</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition">
+                        <h4 class="font-bold text-sm text-gray-700 mb-4 flex items-center gap-2 bg-gray-50 p-2 rounded"><i class="fa-solid fa-pen"></i> Manual Entry</h4>
+                        <div class="space-y-4">
+                            <input type="text" id="newClinicName" class="dash-input" placeholder="Clinic Name">
+                            <textarea id="newClinicAddress" class="dash-input" rows="3" placeholder="Full Address"></textarea>
+                            <button onclick="addClinicManual()" class="bg-redcliffe-navy hover:bg-blue-900 text-white px-4 py-3 rounded-lg text-xs font-bold shadow w-full transition">Add Clinic</button>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition">
+                        <h4 class="font-bold text-sm text-gray-700 mb-4 flex items-center gap-2 bg-gray-50 p-2 rounded"><i class="fa-solid fa-file-csv"></i> Bulk Upload</h4>
+                        <div class="space-y-4">
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                                <input type="file" id="clinicCsvFile" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept=".csv">
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="downloadClinicSample()" class="text-blue-600 underline text-xs font-bold">Download Template</button>
+                                <button onclick="processClinicCSV()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg text-xs font-bold shadow flex-1 transition">Upload File</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="border rounded-xl h-96 overflow-y-auto shadow-inner">
+                    <table class="custom-table text-xs"><thead class="sticky top-0 bg-gray-50"><tr><th>Clinic Name</th><th>Address</th></tr></thead><tbody id="clinicTableBody"></tbody></table>
+                </div>
+            </div>
+
+            <div id="view-my-reports" class="view-section hidden flex-1 flex-col h-full bg-white p-6 overflow-auto rounded-2xl shadow-card border border-gray-200 animate-slide-up">
+                <h3 class="font-bold text-redcliffe-navy text-2xl mb-2 flex items-center gap-2"><i class="fa-solid fa-clipboard-check text-teal-500"></i> My Reports</h3>
+                <p class="text-xs text-gray-500 mb-6">Detailed history of requests raised by your account.</p>
+                <div class="flex-1 overflow-auto border rounded-xl shadow-inner">
+                    <table class="custom-table text-xs"><thead class="sticky top-0 bg-gray-50"><tr><th>Date</th><th>Order ID</th><th>Clinic</th><th>Items Sent</th><th>Current Status</th></tr></thead><tbody id="agentReportBody"></tbody></table>
+                </div>
+            </div>
+
+            <div id="view-suggestions" class="view-section hidden flex-1 flex-col h-full p-10 max-w-3xl mx-auto w-full animate-slide-up">
+                <h3 class="font-bold text-redcliffe-navy text-2xl mb-6 flex items-center gap-2"><i class="fa-regular fa-lightbulb text-yellow-500"></i> Feedback</h3>
+                <div class="bg-white p-8 rounded-2xl shadow-card border border-gray-200">
+                    <textarea id="suggestionText" rows="8" class="w-full p-4 border rounded-xl text-sm mb-6 focus:border-redcliffe-navy outline-none bg-gray-50 resize-none" placeholder="Share your ideas or report issues..."></textarea>
+                    <button onclick="submitSuggestion()" class="bg-redcliffe-navy text-white px-8 py-3 rounded-xl text-sm font-bold shadow-lg hover:bg-blue-900 transition w-full md:w-auto">Submit Feedback</button>
+                </div>
+            </div>
+
+            <div id="view-profile" class="view-section hidden flex-1 flex-col h-full p-10 max-w-lg mx-auto w-full pt-16 animate-slide-up">
+                <div class="bg-white p-8 rounded-2xl border border-gray-200 shadow-2xl relative mt-10">
+                    <div class="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-redcliffe-navy text-white h-24 w-24 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+                        <i class="fa-solid fa-user-shield text-4xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-redcliffe-navy mb-8 text-center mt-10">Account Security</h2>
+                    <div class="space-y-6">
+                        <div><label class="dash-label">Username / EID</label><input type="text" id="profUser" class="dash-input bg-gray-100 font-mono" readonly></div>
+                        <div class="pt-6 border-t border-gray-100">
+                            <h4 class="text-sm font-bold text-redcliffe-navy mb-4 flex items-center gap-2"><i class="fa-solid fa-key"></i> Update Password</h4>
+                            <div class="space-y-4">
+                                <div><label class="dash-label">Current Password</label><input type="password" id="profOldPass" class="dash-input" placeholder="••••••••"></div>
+                                <div><label class="dash-label">New Password</label><input type="password" id="profPass" class="dash-input" placeholder="New strong password"></div>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 pt-4">
+                            <button onclick="updatePasswordInternal()" class="flex-1 bg-redcliffe-navy text-white font-bold py-3.5 rounded-xl shadow hover:bg-blue-900 transition">Update</button>
+                            <button onclick="handleLogout()" class="flex-1 border border-red-500 text-red-500 font-bold py-3.5 rounded-xl shadow hover:bg-red-50 transition">Sign Out</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="riderView" class="hidden flex flex-col h-full bg-gray-100 relative">
+        <header class="bg-redcliffe-navy text-white h-16 flex items-center justify-between px-6 shadow-md z-30 flex-none">
+            <div class="flex items-center gap-4">
+                <div class="bg-white px-2 py-1 rounded"><img src="logo.png" alt="Logo" class="h-8 object-contain"></div>
+                <div class="font-bold text-xl tracking-wide">Rider Portal</div>
+            </div>
+            <button onclick="handleLogout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow transition"><i class="fa-solid fa-power-off mr-2"></i> LOGOUT</button>
+        </header>
+        <main class="flex-1 flex flex-col items-center justify-center p-6">
+            <div class="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md text-center transform transition hover:scale-[1.01] duration-300">
+                <div class="mb-8 flex justify-center"><div class="h-24 w-24 bg-blue-50 rounded-full flex items-center justify-center"><i class="fa-solid fa-truck-fast text-6xl text-redcliffe-navy"></i></div></div>
+                <h2 class="text-3xl font-black mb-2 text-gray-800">Scan & Update</h2>
+                <p class="text-gray-500 mb-8 text-sm">Enter Tracking ID to proceed</p>
+                <div class="relative mb-6">
+                    <i class="fa-solid fa-barcode absolute left-4 top-4.5 text-gray-400 text-lg"></i>
+                    <input type="text" id="riderSearchId" class="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 text-center text-xl uppercase font-bold tracking-wider focus:border-redcliffe-navy outline-none transition" placeholder="TRK-XXXX">
+                </div>
+                <button onclick="riderSearch()" class="bg-redcliffe-navy hover:bg-blue-900 text-white px-8 py-4 rounded-xl font-bold w-full shadow-lg transition text-sm uppercase tracking-wide">Search Order</button>
+            </div>
+            <p id="riderMsg" class="mt-6 text-red-500 font-bold text-sm bg-red-50 px-4 py-2 rounded hidden"></p>
+            <button onclick="location.reload()" class="mt-8 text-blue-600 underline text-xs font-bold">Switch to Agent Dashboard</button>
+        </main>
+    </div>
+
+    <div id="dispatchModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 animate-slide-up">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 class="font-bold text-xl text-redcliffe-navy">Create New Request</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            </div>
+            <div class="bg-blue-50 p-5 rounded-xl mb-6 border border-blue-100 shadow-inner">
+                <div class="grid grid-cols-4 gap-3 items-end">
+                    <div class="col-span-2"><label class="dash-label text-blue-800">Product</label><select id="dProd" class="dash-input border-blue-200"></select></div>
+                    <div><label class="dash-label text-blue-800">Qty</label><input type="number" id="dQty" class="dash-input border-blue-200" min="1"></div>
+                    <button onclick="addToBatch()" class="bg-blue-600 text-white font-bold p-2.5 rounded-lg text-xs shadow hover:bg-blue-700 transition h-[42px] w-full">ADD</button>
+                </div>
+            </div>
+            <div id="batchList" class="mb-6 text-xs text-gray-600 bg-gray-50 p-4 rounded-xl min-h-[80px] border border-gray-200 flex flex-wrap gap-2 content-start"><span class="text-gray-400 italic w-full text-center mt-2">No items added yet.</span></div>
+            <div class="space-y-4 mb-8">
+                <div><label class="dash-label">Select Clinic</label><select id="dClinic" onchange="autoFillAddress()" class="dash-input"></select></div>
+                <div><label class="dash-label">Delivery Address</label><textarea id="dAddress" rows="3" class="dash-input bg-gray-50" readonly></textarea></div>
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeModal()" class="text-gray-500 font-bold text-sm px-6 hover:bg-gray-100 rounded-lg transition py-3">Cancel</button>
+                <button onclick="finalizeDispatch()" class="bg-redcliffe-navy hover:bg-blue-900 text-white px-8 py-3 rounded-lg text-sm font-bold shadow-lg transition transform hover:-translate-y-0.5">Submit Request</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="trackingModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl h-[85vh] flex flex-col overflow-hidden animate-slide-up">
+            <div class="bg-redcliffe-navy p-6 flex justify-between items-center text-white shadow-lg">
+                <div><h3 class="font-extrabold text-2xl tracking-wider" id="trkId">#TRK-000</h3><p class="text-sm opacity-80 font-medium" id="trkClinic">Clinic Name</p></div>
+                <button onclick="closeTracking()" class="bg-white/10 hover:bg-white/20 p-2 rounded-full w-10 h-10 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="flex-1 overflow-auto p-8 bg-slate-50">
+                <div class="bg-white p-5 rounded-xl border border-gray-200 mb-6 shadow-sm"><p class="text-[10px] text-gray-400 uppercase font-bold mb-2 tracking-wide">Destination</p><p id="trkAddress" class="text-sm text-gray-800 font-medium leading-relaxed"></p></div>
+                <div class="bg-white p-5 rounded-xl border border-gray-200 mb-8 shadow-sm"><p class="text-[10px] text-gray-400 uppercase font-bold mb-2 tracking-wide">Contents</p><div id="trkItems" class="text-sm text-gray-700 font-medium space-y-2"></div></div>
+                <div class="px-2"><p class="text-[10px] text-gray-400 uppercase font-bold mb-4 tracking-wide">Timeline</p><div id="timelineContainer" class="space-y-0"></div></div>
+            </div>
+            <div class="p-5 bg-white border-t border-gray-200 flex flex-col gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]" id="actionFooter">
+                <div class="flex gap-3 mb-1">
+                    <select id="statusSelect" class="dash-input w-1/3 font-bold text-gray-700"><option value="">Status...</option><option value="Dispatched">Dispatched</option><option value="In Transit">In Transit</option><option value="Out for Delivery">Out for Delivery</option><option value="Delayed">Delayed</option><option value="Delivered">Delivered</option></select>
+                    <input type="text" id="statusText" class="flex-1 dash-input" placeholder="Note (optional)">
+                    <label class="cursor-pointer bg-gray-100 hover:bg-gray-200 border rounded-lg px-4 py-2 flex items-center justify-center text-gray-600 transition" title="Attach Proof"><i class="fa-solid fa-camera text-lg"></i><input type="file" id="statusProof" class="hidden" accept="image/*"></label>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="postUpdateInternal()" class="flex-1 bg-redcliffe-navy hover:bg-blue-900 text-white px-4 py-3 rounded-lg text-sm font-bold shadow transition">Update Status</button>
+                    <button id="btnApproveOrder" onclick="approveAndDeduct()" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg text-sm font-bold shadow transition hidden"><i class="fa-solid fa-check-circle mr-2"></i> APPROVE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="stockInSingleModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60"><div class="bg-white p-6 rounded-lg w-80 shadow-xl"><h3 class="font-bold mb-4 text-redcliffe-navy">Add Single</h3><select id="sProd" class="w-full border p-2 rounded mb-3 text-xs"></select><input type="number" id="sQty" placeholder="Qty" class="w-full border p-2 rounded mb-4 text-xs"><div class="flex gap-2"><button onclick="processStockSingle()" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold text-xs">Add</button><button onclick="document.getElementById('stockInSingleModal').classList.add('hidden')" class="flex-1 border text-xs">Cancel</button></div></div></div>
+    <div id="stockInBulkModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60"><div class="bg-white p-6 rounded-lg w-96 shadow-xl"><h3 class="font-bold mb-4 text-redcliffe-navy">Add Multi</h3><div class="flex gap-2 mb-2"><select id="bProd" class="w-2/3 border p-2 rounded text-xs"></select><input type="number" id="bQty" placeholder="Qty" class="w-1/3 border p-2 rounded text-xs"></div><button onclick="addBulkRow()" class="w-full border border-blue-600 text-blue-600 py-1 rounded text-xs font-bold mb-4 hover:bg-blue-50">+ Add to List</button><div id="bulkList" class="bg-gray-50 p-2 rounded border h-32 overflow-y-auto mb-4 text-xs"></div><div class="flex gap-2"><button onclick="processStockBulk()" class="flex-1 bg-purple-600 text-white py-2 rounded font-bold text-xs">Submit All</button><button onclick="document.getElementById('stockInBulkModal').classList.add('hidden')" class="flex-1 border text-xs">Cancel</button></div></div></div>
+    <div id="stockInCSVModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60"><div class="bg-white p-6 rounded-lg w-96 shadow-xl text-center"><h3 class="font-bold mb-4 text-redcliffe-navy">Upload CSV</h3><button onclick="downloadSampleCSV()" class="text-blue-600 underline text-xs mb-4 block w-full">Download Format</button><input type="file" id="csvFileInput" class="block w-full text-xs text-slate-500 mb-4" accept=".csv"><div class="flex gap-2"><button onclick="processStockCSV()" class="flex-1 bg-green-600 text-white py-2 rounded font-bold text-xs">Upload</button><button onclick="document.getElementById('stockInCSVModal').classList.add('hidden')" class="flex-1 border text-xs">Cancel</button></div></div></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, arrayUnion, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+        // CONFIG (Your Keys)
+        const firebaseConfig = {
+            apiKey: "AIzaSyABcIIV0Rqvt42QK8FzsKWgWOF2lCwBrGM",
+            authDomain: "inventory-d8839.firebaseapp.com",
+            projectId: "inventory-d8839",
+            storageBucket: "inventory-d8839.firebasestorage.app",
+            messagingSenderId: "460924754414",
+            appId: "1:460924754414:web:2bc5d3fdea1d6f0280d6ff"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app); 
+        const ADMIN_EMAIL = "financewithkuldeep22@gmail.com";
+
+        // GLOBAL STATE
+        let CLINIC_LOCATIONS = [];
+        let PRODUCTS = [];
+        window.currentUser = null;
+        window.shipmentsData = [];
+        window.ledgerData = [];
+        window.activeShipmentId = null;
+        window.currentBatch = [];
+        window.bulkBatch = [];
+        window.isAdmin = false;
+
+        // TOAST NOTIFICATION SYSTEM
+        window.showToast = (msg, type = 'info') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            let icon = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-circle-xmark' : 'fa-circle-info');
+            let color = type === 'success' ? 'text-green-600' : (type === 'error' ? 'text-red-600' : 'text-blue-600');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<i class="fa-solid ${icon} ${color} text-xl"></i><div class="text-sm font-bold text-gray-700">${msg}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; setTimeout(() => toast.remove(), 300); }, 3000);
+        };
+
+        // AUTHENTICATION
+        window.handleLogin = async () => {
+            const loginInput = document.getElementById("loginEmail").value.trim();
+            const passwordInput = document.getElementById("loginPass").value.trim();
+            const msg = document.getElementById("loginMsg");
+            
+            document.querySelectorAll('.dash-input').forEach(el => el.classList.remove('error'));
+            if(!loginInput) { document.getElementById("loginEmail").classList.add("error"); return window.showToast("Email/ID required", "error"); }
+            if(!passwordInput) { document.getElementById("loginPass").classList.add("error"); return window.showToast("Password required", "error"); }
+
+            msg.innerText = "Verifying Credentials...";
+            let emailToUse = loginInput.includes('@') ? loginInput : loginInput + "@redcliffe.com";
+            let passwordToUse = passwordInput || loginInput; // Fallback to EID if password empty
+            
+            try { 
+                await signInWithEmailAndPassword(auth, emailToUse, passwordToUse); 
+            } catch (error) { 
+                console.error(error);
+                msg.innerText = "Invalid Credentials"; 
+                window.showToast("Login Failed: check ID/Password", "error");
+            }
+        };
+        window.handleLogout = () => signOut(auth).then(() => window.location.reload());
+
+        onAuthStateChanged(auth, async (user) => {
+            // Remove Loader smoothly
+            const loader = document.getElementById("pageLoader");
+            if(loader) { 
+                // Set fallback timeout
+                setTimeout(() => { loader.style.opacity = "0"; setTimeout(() => loader.remove(), 500); }, 3000);
+            }
+
+            if (user) {
+                // Ensure Login is hidden
+                document.getElementById("loginView").classList.add("hidden");
+                // Immediately remove loader on success
+                if(loader) { loader.style.opacity = "0"; setTimeout(() => loader.remove(), 500); }
+
+                window.currentUser = user;
+                window.isAdmin = (user.email === ADMIN_EMAIL);
+                
+                let role = window.isAdmin ? "ADMIN" : (user.email.includes("rider") ? "RIDER" : "AGENT");
+                
+                document.getElementById("adminUserDisplay").innerText = role;
+                document.getElementById("displayUsername").innerText = user.email.split('@')[0].toUpperCase();
+                document.getElementById("headerRole").innerText = role;
+                document.getElementById("ddEmail").innerText = user.email;
+                document.getElementById("profUser").value = user.email;
+
+                // Load Data asynchronously
+                await Promise.all([window.loadClinics(), window.loadProducts()]);
+                initUI();
+                await Promise.all([window.loadShipments(), window.loadLedger()]);
+
+                if (role === "RIDER") {
+                    document.getElementById("riderView").classList.remove("hidden");
+                    document.getElementById("riderUserDisplay").innerText = user.email;
+                } else {
+                    document.getElementById("mainView").classList.remove("hidden");
+                    if (window.isAdmin) {
+                        document.getElementById("adminMenu").classList.remove("hidden");
+                        document.getElementById("adminAgentFilterDiv").classList.remove("hidden");
+                        document.getElementById("stockActionGroup").classList.remove("hidden");
+                        document.getElementById("addProductBtnContainer").classList.remove("hidden");
+                    } else {
+                        document.getElementById("agentMenu").classList.remove("hidden");
+                    }
+                }
+            } else {
+                // If not logged in, remove loader and show login
+                if(loader) { loader.style.opacity = "0"; setTimeout(() => loader.remove(), 500); }
+                document.getElementById("loginView").classList.remove("hidden");
+            }
+        });
+
+        // DATA LOADING
+        window.loadClinics = async () => {
+            CLINIC_LOCATIONS = [{ name: "Mumbai – Thane", address: "Shop 12, Pride Park" }, { name: "Mumbai – Vashi", address: "ADC Sector 15" }];
+            try { const q = await getDocs(collection(db, "clinics")); q.forEach((doc) => { const c = doc.data(); if (!CLINIC_LOCATIONS.some(cl => cl.name === c.name)) CLINIC_LOCATIONS.push(c); }); CLINIC_LOCATIONS.sort((a, b) => a.name.localeCompare(b.name)); } catch (e) { console.log(e); }
+        };
+        window.loadProducts = async () => {
+            PRODUCTS = [{ id: 1, name: "EDTA Vial", price: 4.1 }, { id: 2, name: "Fluoride Vial", price: 7 }, { id: 3, name: "SST Vial", price: 21 }, { id: 4, name: "Citrate Tube", price: 7 }];
+            try { const q = await getDocs(collection(db, "products")); q.forEach((doc) => { const p = doc.data(); if (!PRODUCTS.some(pr => pr.name === p.name)) PRODUCTS.push({ id: p.id || Date.now(), name: p.name, price: p.price }); }); } catch (e) { console.log(e); }
+        };
+        window.loadShipments = async () => { try { const q = await getDocs(collection(db, "shipments")); window.shipmentsData = []; q.forEach((doc) => window.shipmentsData.push({ docId: doc.id, ...doc.data() })); window.shipmentsData.sort((a, b) => new Date(b.created) - new Date(a.created)); window.renderShipments(); } catch (e) { console.error(e); } };
+        window.loadLedger = async () => { try { const q = await getDocs(collection(db, "ledger")); window.ledgerData = []; q.forEach((doc) => window.ledgerData.push(doc.data())); window.ledgerData.sort((a, b) => new Date(b.date) - new Date(a.date)); window.renderHistory(); window.renderStore(); } catch (e) { window.renderStore(); } };
+
+        // UI & HELPERS
+        function initUI() {
+            const pOpts = PRODUCTS.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+            document.getElementById('dProd').innerHTML = pOpts; document.getElementById('sProd').innerHTML = pOpts; document.getElementById('bProd').innerHTML = pOpts;
+            const cOpts = `<option value="">Select Clinic</option>` + CLINIC_LOCATIONS.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+            document.getElementById('dClinic').innerHTML = cOpts; document.getElementById('clinicList').innerHTML = CLINIC_LOCATIONS.map(c => `<li><label><input type="checkbox" value="${c.name}"> ${c.name}</label></li>`).join('');
+            document.getElementById('clinicTableBody').innerHTML = CLINIC_LOCATIONS.map(c => `<tr class="border-b"><td class="p-3 font-bold text-redcliffe-navy">${c.name}</td><td class="p-3 text-gray-600">${c.address}</td></tr>`).join('');
+        }
+
+        window.autoFillAddress = () => {
+            const select = document.getElementById('dClinic'); const selectedName = select.options[select.selectedIndex].value;
+            const clinic = CLINIC_LOCATIONS.find(c => c.name === selectedName);
+            document.getElementById('dAddress').value = clinic ? clinic.address : "";
+        };
+
+        window.renderShipments = () => {
+            const list = document.getElementById('shipmentTableBody');
+            const fid = document.getElementById('filterId').value.toLowerCase();
+            const checkedClinics = Array.from(document.querySelectorAll('#clinicList input:checked')).map(cb => cb.value);
+            const checkedStatuses = Array.from(document.querySelectorAll('#statusList input:checked')).map(cb => cb.value);
+            const startDate = document.getElementById('dashStart').value;
+            const endDate = document.getElementById('dashEnd').value;
+            const filterAgent = document.getElementById('filterAgent').value;
+
+            if(window.isAdmin && document.getElementById('filterAgent').options.length <= 1) {
+                const agents = [...new Set(window.shipmentsData.map(s => s.createdBy || 'Unknown'))];
+                agents.forEach(a => { const opt = document.createElement('option'); opt.value = a; opt.innerText = a.split('@')[0].toUpperCase(); document.getElementById('filterAgent').appendChild(opt); });
+            }
+
+            list.innerHTML = '';
+            const filtered = window.shipmentsData.filter(s => {
+                const itemDate = s.created.split('T')[0];
+                const dateMatch = (!startDate || itemDate >= startDate) && (!endDate || itemDate <= endDate);
+                if (!window.isAdmin && s.createdBy !== window.currentUser.email) return false;
+                if (window.isAdmin && filterAgent && s.createdBy !== filterAgent) return false;
+                return dateMatch && (!fid || s.orderId.toLowerCase().includes(fid)) && (checkedClinics.length === 0 || checkedClinics.includes(s.clinic)) && (checkedStatuses.length === 0 || checkedStatuses.includes(s.status));
+            });
+
+            document.getElementById('countDisplay').innerText = filtered.length;
+            if(filtered.length === 0) { list.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-gray-400 font-bold">No records found matching filters.</td></tr>'; return; }
+
+            filtered.forEach((s) => {
+                let badge = 'status-pending';
+                if(s.status === 'Approval Pending') badge = 'status-approval';
+                else if(s.status === 'Successful') badge = 'status-success';
+                else if(s.status === 'Ongoing') badge = 'status-ongoing';
+                const itemCount = Array.isArray(s.items) ? s.items.length : 1;
+                const owner = s.createdBy ? s.createdBy.split('@')[0].toUpperCase() : 'N/A';
+                list.innerHTML += `<tr class="hover:bg-blue-50 border-b border-gray-50 transition cursor-default"><td class="p-3 text-gray-500 font-mono text-xs">${s.created.split('T')[0]}</td><td class="p-3 font-bold text-redcliffe-navy">${s.orderId}</td><td class="p-3 text-xs font-bold text-gray-500">${owner}</td><td class="p-3 truncate max-w-xs font-medium">${s.clinic}</td><td class="p-3 text-center text-xs font-bold bg-gray-50 rounded mx-1">${itemCount} Items</td><td class="p-3 text-center"><span class="status-badge ${badge}">${s.status}</span></td><td class="p-3 text-center"><button onclick="openTracking('${s.docId}')" class="text-blue-600 hover:text-blue-800 font-bold text-xs border border-blue-200 hover:border-blue-400 px-3 py-1 rounded transition">View</button></td></tr>`;
+            });
+            if(!window.isAdmin) renderAgentReport(filtered);
+        };
+
+        function renderAgentReport(data) {
+            const tb = document.getElementById('agentReportBody'); tb.innerHTML = '';
+            data.forEach(s => {
+                const itemStr = Array.isArray(s.items) ? s.items.map(i => `${i.name}`).join(', ') : 'Items';
+                tb.innerHTML += `<tr class="border-b"><td class="p-3">${s.created.split('T')[0]}</td><td class="p-3 font-bold">${s.orderId}</td><td class="p-3">${s.clinic}</td><td class="p-3 text-xs text-gray-500">${itemStr}</td><td class="p-3 font-bold">${s.status}</td></tr>`;
+            });
+        }
+
+        // ACTIONS
+        window.addToBatch = () => {
+            const pid = document.getElementById('dProd').value; const qty = parseInt(document.getElementById('dQty').value);
+            if (qty > 0) {
+                const p = PRODUCTS.find(x => x.id == pid);
+                window.currentBatch.push({pid, name: p.name, qty});
+                document.getElementById('batchList').innerHTML = window.currentBatch.map(i => `<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full mr-2 text-[11px] font-bold border border-blue-200 shadow-sm">${i.name} x${i.qty}</span>`).join('');
+                document.getElementById('dQty').value = '';
+            } else { window.showToast("Invalid Quantity", "error"); }
+        };
+
+        window.finalizeDispatch = async () => {
+            if(document.getElementById('dQty').value > 0) window.addToBatch();
+            if(window.currentBatch.length === 0) return window.showToast("Add Items First", "error");
+            const clinic = document.getElementById('dClinic').value;
+            if(!clinic) return window.showToast("Select Clinic", "error");
+            const initialStatus = window.isAdmin ? 'PENDING' : 'Approval Pending';
+            const newOrder = { orderId: 'TRK-' + Date.now().toString().slice(-6), clinic: clinic, address: document.getElementById('dAddress').value, items: [...window.currentBatch], status: initialStatus, createdBy: window.currentUser.email, created: new Date().toISOString(), timeline: [{ status: "Request Created", time: new Date().toLocaleString(), user: window.currentUser.email }] };
+            try { await addDoc(collection(db, "shipments"), newOrder); window.closeModal(); window.showToast(window.isAdmin ? "Order Created!" : "Request Sent!", "success"); await window.loadShipments(); } catch (e) { window.showToast(e.message, "error"); }
+        };
+
+        window.openTracking = (docId) => {
+            window.activeShipmentId = docId;
+            const s = window.shipmentsData.find(x => x.docId === docId); if(!s) return;
+            document.getElementById('trackingModal').classList.remove('hidden');
+            document.getElementById('trkId').innerText = s.orderId; document.getElementById('trkClinic').innerText = s.clinic; document.getElementById('trkAddress').innerText = s.address || "";
+            if(Array.isArray(s.items)) document.getElementById('trkItems').innerHTML = s.items.map(i => `<div class="flex justify-between border-b pb-1"><span>${i.name}</span><span class="font-bold">x${i.qty}</span></div>`).join('');
+            document.getElementById('timelineContainer').innerHTML = s.timeline.map(t => {
+                const imgHtml = t.img ? `<div class="mt-2"><img src="${t.img}" class="w-20 h-20 object-cover rounded-lg border cursor-pointer hover:opacity-80 transition" onclick="window.open(this.src)"> <a href="${t.img}" download="proof.png" class="block text-[10px] text-blue-600 font-bold mt-1">Download Proof</a></div>` : '';
+                return `<div class="relative pl-8 pb-8 timeline-item"><div class="timeline-line"></div><div class="absolute left-2 top-1.5 w-3 h-3 bg-redcliffe-navy rounded-full z-10 border-2 border-white ring-2 ring-blue-100"></div><div><div class="font-bold text-sm text-gray-800">${t.status}</div><div class="text-[11px] text-gray-400 font-mono mt-0.5">${t.time} • ${t.user.split('@')[0]}</div>${imgHtml}</div></div>`
+            }).join('');
+            const btn = document.getElementById('btnApproveOrder');
+            if(window.isAdmin && s.status === 'Approval Pending') btn.classList.remove('hidden'); else btn.classList.add('hidden');
+        };
+
+        window.approveAndDeduct = async () => {
+            if(!confirm("Approve & Deduct Stock?")) return;
+            try {
+                const s = window.shipmentsData.find(x => x.docId === window.activeShipmentId);
+                const batchPromises = s.items.map(item => { return addDoc(collection(db, "ledger"), { pid: item.pid, qty: item.qty, type: 'OUT', reason: `Order ${s.orderId}`, user: window.currentUser.email, date: new Date().toISOString() }); });
+                await Promise.all(batchPromises);
+                const docRef = doc(db, "shipments", window.activeShipmentId);
+                await updateDoc(docRef, { status: 'PENDING', timeline: arrayUnion({ status: 'Approved by Admin', time: new Date().toLocaleString(), user: window.currentUser.email }) });
+                window.showToast("Approved & Deducted", "success"); window.closeTracking(); await Promise.all([window.loadShipments(), window.loadLedger()]);
+            } catch(e) { window.showToast(e.message, "error"); }
+        };
+
+        window.postUpdateInternal = async () => {
+            const statusSelect = document.getElementById("statusSelect").value;
+            const statusText = document.getElementById("statusText").value;
+            let finalStatus = statusSelect || statusText;
+            if(!finalStatus) return window.showToast("Select Status", "error");
+            const file = document.getElementById('statusProof').files[0];
+            if(!file && window.currentUser.email !== ADMIN_EMAIL) return window.showToast("Photo Required!", "error");
+            const doUpdate = async (url) => {
+                const docRef = doc(db, "shipments", window.activeShipmentId);
+                const payload = { timeline: arrayUnion({ status: finalStatus, time: new Date().toLocaleString(), user: window.currentUser.email, img: url }) };
+                if(statusSelect) payload.status = statusSelect;
+                await updateDoc(docRef, payload);
+                window.closeTracking();
+                if(window.isAdmin) await window.loadShipments(); else window.showToast("Updated Successfully", "success");
+            };
+            if(file) {
+                try {
+                    window.showToast("Uploading...", "info");
+                    const storageRef = ref(storage, 'proofs/' + Date.now() + '_' + file.name);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    const downloadURL = await getDownloadURL(snapshot.ref);
+                    doUpdate(downloadURL);
+                } catch(e) { window.showToast("Storage Error: " + e.message, "error"); }
+            } else { doUpdate(null); }
+        };
+
+        window.exportCSV = () => {
+            const fid = document.getElementById('filterId').value.toLowerCase();
+            const checkedClinics = Array.from(document.querySelectorAll('#clinicList input:checked')).map(cb => cb.value);
+            const startDate = document.getElementById('dashStart').value;
+            const endDate = document.getElementById('dashEnd').value;
+            const filterAgent = document.getElementById('filterAgent').value;
+            const filtered = window.shipmentsData.filter(s => {
+                const itemDate = s.created.split('T')[0];
+                const dateMatch = (!startDate || itemDate >= startDate) && (!endDate || itemDate <= endDate);
+                if (!window.isAdmin && s.createdBy !== window.currentUser.email) return false;
+                if (window.isAdmin && filterAgent && s.createdBy !== filterAgent) return false;
+                return dateMatch && (!fid || s.orderId.toLowerCase().includes(fid)) && (checkedClinics.length === 0 || checkedClinics.includes(s.clinic));
+            });
+            let csv = "Date,Order ID,Created By,Clinic,Address,Status,Items,Order Value,Last Update\n";
+            let grandTotal = 0;
+            filtered.forEach(s => {
+                let orderValue = 0;
+                const itemStr = Array.isArray(s.items) ? s.items.map(i => { const prod = PRODUCTS.find(p => p.id == i.pid); const cost = prod ? (prod.price * i.qty) : 0; orderValue += cost; return `${i.name}(${i.qty})`; }).join('; ') : '';
+                grandTotal += orderValue;
+                let lastUpdate = "N/A";
+                if(s.timeline && s.timeline.length > 0) lastUpdate = s.timeline[s.timeline.length - 1].time;
+                const cleanAddress = s.address ? s.address.replace(/,/g, " ") : "";
+                const cleanItems = itemStr.replace(/,/g, " ");
+                csv += `${s.created.split('T')[0]},${s.orderId},${s.createdBy},${s.clinic},"${cleanAddress}",${s.status},"${cleanItems}",₹${orderValue.toFixed(2)},"${lastUpdate}"\n`;
+            });
+            csv += `,,,,,,,GRAND TOTAL: ₹${grandTotal.toFixed(2)},\n`;
+            const link = document.createElement("a"); link.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv); link.download = "Logistics_Report_Clean.csv"; link.click();
+        };
+
+        // ... REMAINING UTILS (Modal toggles, etc.) ...
+        window.openModal = () => document.getElementById('dispatchModal').classList.remove('hidden');
+        window.closeModal = () => { document.getElementById('dispatchModal').classList.add('hidden'); window.currentBatch = []; document.getElementById('batchList').innerHTML = '<span class="text-gray-400 italic">No items added yet.</span>'; };
+        window.closeTracking = () => document.getElementById('trackingModal').classList.add('hidden');
+        window.toggleDD = (id) => document.getElementById(id).parentElement.classList.toggle('visible');
+        window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('sidebarBackdrop').classList.toggle('hidden'); };
+        window.toggleProfileDD = () => document.getElementById('profileDropdownMenu').classList.toggle('hidden');
+        window.openRiderMode = () => { document.getElementById('mainView').classList.add('hidden'); document.getElementById('riderView').classList.remove('hidden'); };
+        window.resetFilters = () => { document.getElementById('filterId').value = ''; document.getElementById('dashStart').value = ''; document.getElementById('dashEnd').value = ''; window.renderShipments(); };
+        window.openStockSingle = () => document.getElementById('stockInSingleModal').classList.remove('hidden');
+        window.openStockBulk = () => document.getElementById('stockInBulkModal').classList.remove('hidden');
+        window.openStockCSV = () => document.getElementById('stockInCSVModal').classList.remove('hidden');
+        window.submitSuggestion = async () => { const txt = document.getElementById("suggestionText").value; if(!txt) return; await addDoc(collection(db, "suggestions"), { text: txt, user: window.currentUser.email, date: new Date().toISOString() }); window.showToast("Suggestion Sent!", "success"); document.getElementById("suggestionText").value = ""; };
+        window.updatePasswordInternal = () => { const oldPass = document.getElementById("profOldPass").value; const newPass = document.getElementById("profPass").value; if(!oldPass) return window.showToast("Enter current password", "error"); if(newPass.length < 6) return window.showToast("Min 6 chars", "error"); const credential = EmailAuthProvider.credential(window.currentUser.email, oldPass); reauthenticateWithCredential(window.currentUser, credential).then(() => { updatePassword(window.currentUser, newPass).then(() => { window.showToast("Password Updated!", "success"); document.getElementById("profOldPass").value = ""; document.getElementById("profPass").value = ""; }).catch((e) => window.showToast(e.message, "error")); }).catch((e) => { window.showToast("Incorrect Current Password", "error"); }); };
+        window.addProductManual = async () => { const name = document.getElementById('newProdName').value.trim(); const price = parseFloat(document.getElementById('newProdPrice').value); if(!name || isNaN(price)) return window.showToast("Fill Details", "error"); try { await addDoc(collection(db, "products"), { id: Date.now(), name, price }); window.showToast("Product Added!", "success"); document.getElementById('newProdName').value = ""; document.getElementById('newProdPrice').value = ""; await window.loadProducts(); initUI(); } catch(e) { window.showToast(e.message, "error"); } };
+        window.addClinicManual = async () => { const name = document.getElementById('newClinicName').value.trim(); const address = document.getElementById('newClinicAddress').value.trim(); if(!name || !address) return window.showToast("Fill Fields", "error"); try { await addDoc(collection(db, "clinics"), { name, address }); window.showToast("Clinic Added!", "success"); document.getElementById('newClinicName').value = ""; document.getElementById('newClinicAddress').value = ""; await window.loadClinics(); initUI(); } catch(e) { window.showToast(e.message, "error"); } };
+        window.processStockSingle = async () => { const pid = document.getElementById('sProd').value; const qty = parseInt(document.getElementById('sQty').value); if(qty > 0) { try { await addDoc(collection(db, "ledger"), { pid: pid, qty: qty, type: 'IN', reason: 'Admin Add', user: window.currentUser.email, date: new Date().toISOString() }); window.showToast("Stock Added!", "success"); document.getElementById('stockInSingleModal').classList.add('hidden'); window.loadLedger(); } catch(e) { window.showToast(e.message, "error"); } } };
+        window.addBulkRow = () => { const pid = document.getElementById('bProd').value; const qty = parseInt(document.getElementById('bQty').value); if(qty>0) { const p = PRODUCTS.find(x=>x.id==pid); window.bulkBatch.push({pid, name: p.name, qty}); document.getElementById('bulkList').innerHTML = window.bulkBatch.map(i=>`<div class=\"flex justify-between border-b p-1\"><span>${i.name}</span><span>${i.qty}</span></div>`).join(''); document.getElementById('bQty').value = ''; } };
+        window.processStockBulk = async () => { if(window.bulkBatch.length === 0) return window.showToast("List Empty", "error"); try { const promises = window.bulkBatch.map(i => addDoc(collection(db, "ledger"), { pid: i.pid, qty: i.qty, type: 'IN', reason: 'Bulk Add', user: window.currentUser.email, date: new Date().toISOString() })); await Promise.all(promises); window.showToast("Bulk Added!", "success"); window.bulkBatch = []; document.getElementById('bulkList').innerHTML = ''; document.getElementById('stockInBulkModal').classList.add('hidden'); window.loadLedger(); } catch(e) { window.showToast(e.message, "error"); } };
+        window.processStockCSV = async () => { const file = document.getElementById('csvFileInput').files[0]; if (!file) return window.showToast("Select CSV", "error"); const reader = new FileReader(); reader.onload = async function(e) { const rows = e.target.result.split('\n').slice(1); let batchData = []; rows.forEach(row => { const cols = row.split(','); if(cols.length >= 2) { const pName = cols[0].trim(); const qty = parseInt(cols[1].trim()); const product = PRODUCTS.find(p => p.name.toLowerCase() === pName.toLowerCase()); if(product && qty > 0) batchData.push({ pid: product.id, qty: qty }); } }); if(batchData.length === 0) return window.showToast("No Valid Data", "error"); try { const promises = batchData.map(i => addDoc(collection(db, "ledger"), { pid: i.pid, qty: i.qty, type: 'IN', reason: 'CSV Import', user: window.currentUser.email, date: new Date().toISOString() })); await Promise.all(promises); window.showToast(`Added ${batchData.length} Items`, "success"); document.getElementById('stockInCSVModal').classList.add('hidden'); window.loadLedger(); } catch(err) { window.showToast(err.message, "error"); } }; reader.readAsText(file); };
+        window.processClinicCSV = async () => { const file = document.getElementById('clinicCsvFile').files[0]; if (!file) return window.showToast("Select CSV", "error"); const reader = new FileReader(); reader.onload = async function(e) { const rows = e.target.result.split('\n'); let count = 0; const batchPromises = []; rows.forEach(row => { const cols = row.split(','); if(cols.length >= 2) { const name = cols[0].trim(); const address = cols.slice(1).join(',').trim(); if(name && address) { batchPromises.push(addDoc(collection(db, "clinics"), { name, address })); count++; } } }); if(count === 0) return window.showToast("No Data", "error"); try { await Promise.all(batchPromises); window.showToast(`Added ${count} Clinics`, "success"); await window.loadClinics(); initUI(); } catch(err) { window.showToast(err.message, "error"); } }; reader.readAsText(file); };
+        window.downloadSampleCSV = () => { const link = document.createElement("a"); link.href = encodeURI("data:text/csv;charset=utf-8,Product Name,Quantity\nEDTA Vial,100\nGloves,50"); link.download = "sample_inventory.csv"; link.click(); };
+        window.downloadClinicSample = () => { const link = document.createElement("a"); link.href = encodeURI("data:text/csv;charset=utf-8,Pune - New Center,Shop 5 Main Road Pune\nDelhi - South Ex,A-12 Ring Road Delhi"); link.download = "sample_clinics.csv"; link.click(); };
+        window.riderSearch = async () => { const trkId = document.getElementById("riderSearchId").value.trim(); if(!trkId) return window.showToast("Enter ID", "error"); const msg = document.getElementById("riderMsg"); msg.innerText = "Searching..."; const q = query(collection(db, "shipments"), where("orderId", "==", trkId)); const snap = await getDocs(q); if(snap.empty) { msg.innerText = "Not Found"; return; } msg.innerText = ""; let s; snap.forEach(doc => s = { docId: doc.id, ...doc.data() }); window.shipmentsData = [s]; window.openTracking(s.docId); };
+        window.renderHistory = () => { const tbody = document.getElementById('historyTableBody'); const startDate = document.getElementById('histStart').value; const endDate = document.getElementById('histEnd').value; const search = document.getElementById('histSearch').value.toLowerCase(); let filteredData = window.ledgerData; if(startDate || endDate) filteredData = filteredData.filter(l => { const itemDate = l.date.split('T')[0]; return (!startDate || itemDate >= startDate) && (!endDate || itemDate <= endDate); }); if(search) filteredData = filteredData.filter(l => { const p = PRODUCTS.find(x => x.id == l.pid)?.name.toLowerCase() || ''; const u = l.user.toLowerCase(); return p.includes(search) || u.includes(search); }); if(filteredData.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">No records.</td></tr>'; return; } tbody.innerHTML = filteredData.map(l => { const p = PRODUCTS.find(x => x.id == l.pid)?.name || 'Unknown'; const color = l.type === 'IN' ? 'text-green-600' : 'text-red-600'; return `<tr class="border-b"><td class="p-4 text-xs font-mono">${new Date(l.date).toLocaleString()}</td><td class="p-4 font-bold ${color}">${l.type}</td><td class="p-4 font-bold">${p}</td><td class="p-4 font-bold">${l.qty}</td><td class="p-4 text-gray-500 text-xs">${l.user}</td><td class="p-4 text-xs text-gray-500 italic">${l.reason}</td></tr>`; }).join(''); };
+        window.renderStore = () => { const tbody = document.getElementById('storeTableBody'); tbody.innerHTML = PRODUCTS.map(p => { const stock = window.ledgerData.reduce((acc, curr) => { if (curr.pid == p.id) return curr.type === 'IN' ? acc + curr.qty : acc - curr.qty; return acc; }, 0); const status = stock < 50 ? '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-bold">LOW STOCK</span>' : '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold">IN STOCK</span>'; return `<tr class="border-b hover:bg-gray-50"><td class="p-4 font-bold text-gray-700">${p.name}</td><td class="p-4 text-gray-600">₹${p.price}</td><td class="p-4 font-black text-blue-900 text-lg">${stock}</td><td class="p-4">${status}</td></tr>`; }).join(''); };
+
+        window.nav = (page) => {
+            ['dashboard', 'store', 'history', 'clinics', 'my-reports', 'suggestions', 'profile'].forEach(v => { document.getElementById('view-' + v)?.classList.add('hidden'); });
+            if (page === 'logistics') page = 'dashboard';
+            document.getElementById('view-' + page).classList.remove('hidden');
+            if(window.innerWidth < 768) window.toggleSidebar();
+            
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('bg-blue-50', 'text-redcliffe-navy', 'border-l-4', 'border-redcliffe-navy', 'font-bold', 'shadow-sm');
+                b.classList.add('text-gray-600');
+            });
+            const activeBtn = document.getElementById('nav-' + page);
+            if(activeBtn) { activeBtn.classList.add('bg-blue-50', 'text-redcliffe-navy', 'border-l-4', 'border-redcliffe-navy', 'font-bold', 'shadow-sm'); activeBtn.classList.remove('text-gray-600'); }
+        }
+    </script>
+</body>
+</html>
